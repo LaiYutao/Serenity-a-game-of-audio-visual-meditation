@@ -21,3 +21,6 @@ The auditory effects are inspired by modern classical music, primarily from the 
 
 视觉效果的灵感来自自然界中的非线性、混沌的现象，比如台风、湍流、烟雾扩散。
 听觉效果的灵感来自现代古典音乐，主要是来自偶然音乐、极简主义音乐的理念。
+
+![image](illustration.png)
+
