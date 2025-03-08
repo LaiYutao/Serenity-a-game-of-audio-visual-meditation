@@ -20,6 +20,7 @@ class ScreenManager
 public:
     //默认参数为游戏主画面的参数
     ScreenManager(int screenWidth= ScreenWidth,int screenHeight= ScreenHeight,int fontWidth= FontWidth,int fontHeight= FontHeight);
+    ~ScreenManager();
     void ChangeBufferForm();
     void ShowActImage();
     void ShowPageImage(); // 每次显示后不清空ScreenBuffer

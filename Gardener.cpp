@@ -33,7 +33,7 @@ std::vector<double> Gardener::getCompoundHeight() const
 	return CompoundHeight;
 }
 
-std::vector<Field*>& Gardener::getRefCompoundField()
+std::vector<std::unique_ptr<Field>>& Gardener::getRefCompoundField()
 {
 	return CompoundField;
 }
@@ -122,7 +122,7 @@ void Gardener::PlantIt(const double& timeOfNow)
 		if ((GetAsyncKeyState((unsigned short)'J') & 0x8000)&& !KeyJPressed && !(GetAsyncKeyState((unsigned short)'K') & 0x8000))
 		{
 			//按下J键，种下CircularField
-			CompoundField.push_back(new CircularField(timeOfNow, PlantingPoint, DefaultAmplitude, DefaultFrequency, DefaultInitialPhase, DefaultSpeed));
+			CompoundField.push_back(std::make_unique<CircularField>(timeOfNow, PlantingPoint, DefaultAmplitude, DefaultFrequency, DefaultInitialPhase, DefaultSpeed));
 			CompoundMedium.push_back(CompoundField[CompoundField.size()-1]->getPtrMediumLayer());
 			SourceChecking[PlantY * ScreenWidth + PlantX] = CompoundField.size();//记录此时创建的场的序号，从“1”开始
 			NumOfCircularField++;
@@ -131,7 +131,7 @@ void Gardener::PlantIt(const double& timeOfNow)
 		else if ((GetAsyncKeyState((unsigned short)'K') & 0x8000)&& !KeyKPressed && !(GetAsyncKeyState((unsigned short)'J') & 0x8000))
 		{
 			//按下K键，种下SpiralField
-			CompoundField.push_back(new SpiralField(timeOfNow, PlantingPoint, DefaultAmplitude, DefaultFrequency, DefaultInitialPhase, DefaultSpeed));
+			CompoundField.push_back(std::make_unique<SpiralField>(timeOfNow, PlantingPoint, DefaultAmplitude, DefaultFrequency, DefaultInitialPhase, DefaultSpeed));
 			CompoundMedium.push_back(CompoundField[CompoundField.size() - 1]->getPtrMediumLayer());
 			SourceChecking[PlantY * ScreenWidth + PlantX] = CompoundField.size();//记录此时创建的场的序号，从“1”开始
 			NumOfSpiralField++;

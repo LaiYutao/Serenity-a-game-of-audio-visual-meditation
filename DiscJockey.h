@@ -12,6 +12,7 @@ class DiscJockey
 {
 public:
 	DiscJockey();
+	~DiscJockey();
 	void CalculateHeightDistribution(const std::vector<double>& compoundHeight);
 	void CalculateHertz();
 	double getCalculatedHertz()const;
@@ -21,6 +22,8 @@ public:
 	void DetectIfMute();
 	void MakeWhiteNoise(const double& kDuration);
 	void MakeClusters(const double& kDuration);
+	HANDLE GetPlaybackEvent() const;
+	static void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 
 private:
 	//初始化十二音音列，从中央C开始的十二个音，中间项为0；
@@ -36,5 +39,7 @@ private:
 	HWAVEOUT hWaveOut;
 	WAVEHDR header;
 	MMRESULT result;
+	HANDLE hPlaybackEvent = nullptr; // 事件对象句柄
+
 };
 #endif // DISCJOCKEY_H

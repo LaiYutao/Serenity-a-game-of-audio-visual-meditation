@@ -23,6 +23,28 @@ DiscJockey::DiscJockey()
 	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
 	wfx.cbSize = 0;
 
+	hPlaybackEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	if (!hPlaybackEvent) {
+		std::cerr << "Failed to create event!" << std::endl;
+	}
+
+}
+
+DiscJockey::~DiscJockey()
+{
+	// 关闭音频设备
+	if (hWaveOut) {
+		waveOutClose(hWaveOut);
+	}
+
+	// 关闭事件对象
+	if (hPlaybackEvent) {
+		CloseHandle(hPlaybackEvent);
+	}
+}
+
+HANDLE DiscJockey::GetPlaybackEvent() const {
+	return hPlaybackEvent;
 }
 
 void DiscJockey::CalculateHeightDistribution(const std::vector<double>& compoundHeight)
@@ -114,14 +136,23 @@ void DiscJockey::DetectIfMute()
 }
 
 //下面两个发声的函数需要用到
-void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
+//void CALLBACK waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
+//	if (uMsg == WOM_DONE) {
+//	}
+//}
+
+void CALLBACK DiscJockey::waveOutProc(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2) {
 	if (uMsg == WOM_DONE) {
+		// 通过 dwInstance 获取对象指针
+		DiscJockey* pThis = reinterpret_cast<DiscJockey*>(dwInstance);
+		SetEvent(pThis->GetPlaybackEvent()); // 触发事件
 	}
 }
 
+
 void DiscJockey::MakeWhiteNoise(const double& kDuration)
 {
-	result = waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, (DWORD_PTR)waveOutProc, 0, CALLBACK_FUNCTION);
+	result = waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, (DWORD_PTR)waveOutProc, (DWORD_PTR)this, CALLBACK_FUNCTION);
 
 	// 创建并填充音频数据
 	const int numSamples = int(44100 * kDuration / 1000); //除一千用于转换单位
@@ -163,12 +194,17 @@ void DiscJockey::MakeWhiteNoise(const double& kDuration)
 	//写入并播放
 	result = waveOutPrepareHeader(hWaveOut, &header, sizeof(WAVEHDR));
 	result = waveOutWrite(hWaveOut, &header, sizeof(WAVEHDR));
-	
+
+	WaitForSingleObject(hPlaybackEvent, INFINITE);
+
+	// 释放资源
+	waveOutUnprepareHeader(hWaveOut, &header, sizeof(WAVEHDR));
+	delete[] audioData;
 }
 
 void DiscJockey::MakeClusters(const double& kDuration)
 {
-	result = waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, (DWORD_PTR)waveOutProc, 0, CALLBACK_FUNCTION);
+	result = waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, (DWORD_PTR)waveOutProc, (DWORD_PTR)this, CALLBACK_FUNCTION);
 	
 	// 创建并填充音频数据
 	const int numSamples = int(44100 * kDuration/1000); //除一千用于转换单位
@@ -236,4 +272,9 @@ void DiscJockey::MakeClusters(const double& kDuration)
 	result = waveOutPrepareHeader(hWaveOut, &header, sizeof(WAVEHDR));
 	result = waveOutWrite(hWaveOut, &header, sizeof(WAVEHDR));
 	
+	WaitForSingleObject(hPlaybackEvent, INFINITE);
+
+	// 释放资源
+	waveOutUnprepareHeader(hWaveOut, &header, sizeof(WAVEHDR));
+	delete[] audioData;
 }

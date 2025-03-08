@@ -3,6 +3,7 @@
 #include"ScreenManager.h"
 #include"CircularField.h"
 #include"SpiralField.h"
+#include<memory>
 
 class Gardener
 {
@@ -18,11 +19,11 @@ public:
 	int getNumOfCircularField()const;
 	int getNumOfSpiralField()const;
 	std::vector<double> getCompoundHeight()const;
-	std::vector<Field*>& getRefCompoundField();
+	std::vector<std::unique_ptr<Field>>& getRefCompoundField();
 
 private:
 	int SourceChecking[ScreenWidth * ScreenHeight]; //记录该点处的场对应CompoundField中的序号（从1开始)；‘0’即为该点没有种下一个场；
-	std::vector <Field*> CompoundField;//由所有场叠加而成的复合场
+	std::vector <std::unique_ptr<Field>> CompoundField;//由所有场叠加而成的复合场
 	std::vector<std::vector<Medium>*> CompoundMedium;//创建由所有场对应介质层叠加而成的复合介质
 	std::vector<double> CompoundHeight;//记录每个介质对应的综合高度
 	Point PlantingPoint;

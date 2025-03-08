@@ -6,13 +6,33 @@
 #include<chrono>
 #include<random>
 
+//检测游戏结束
+void CheckIfPressed(bool& ifPressed,char key) {
+	static bool KeyPressed = false;
+	if (GetAsyncKeyState((unsigned short)key) & 0x8000)
+	{
+		if (!KeyPressed)
+		{
+			ifPressed = true;
+			KeyPressed = true;
+		}
+	}
+	else
+	{
+		KeyPressed = false;
+	}
+}
+
 //包含主loop在内的主干，控制游戏主界面
-void Act(ScreenManager TheScreenManager)
+void Act(ScreenManager& TheScreenManager,bool& IfRestart)
 {
 	//设定时间原点
 	double TimeOrigin = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 	auto tp1 = std::chrono::high_resolution_clock::now();
 	auto tp2 = std::chrono::high_resolution_clock::now();
+
+	//是否结束
+	bool IfEnd = false;
 
 	//初始化三个单例
 	Gardener TheGardener;
@@ -21,7 +41,12 @@ void Act(ScreenManager TheScreenManager)
 
 	//主循环
 	while (1) 
-	{
+	{	
+		//检测是否结束或重新开始
+		CheckIfPressed(IfEnd,'X');
+		CheckIfPressed(IfRestart,'R');
+		if (IfEnd == true || IfRestart == true) break;
+
 		//获取ElapsedTime(单位为毫秒)
 		tp2 = std::chrono::high_resolution_clock::now();
 		auto ElapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1).count();
@@ -43,12 +68,12 @@ void Act(ScreenManager TheScreenManager)
 			if (TheDiscJockey.getMusicType() == true)
 			{
 				//十二音音簇模式
-				MusicMode = std::thread([&TheDiscJockey, ElapsedTime]() { TheDiscJockey.MakeClusters(FrameTime*0.4); }); 
+				MusicMode = std::thread([&TheDiscJockey, ElapsedTime]() { TheDiscJockey.MakeClusters(FrameTime * 0.7); }); 
 			}
 			else
 			{
 				//微分白噪音模式
-				MusicMode = std::thread([&TheDiscJockey, ElapsedTime]() { TheDiscJockey.MakeWhiteNoise(FrameTime*0.4); });
+				MusicMode = std::thread([&TheDiscJockey, ElapsedTime]() { TheDiscJockey.MakeWhiteNoise(FrameTime * 0.7); });
 			}
 		}
 
@@ -59,13 +84,13 @@ void Act(ScreenManager TheScreenManager)
 		TheGardener.PlantIt(TimeOfNow);
 
 		//遍历CompoundField中的每一个场,让每个场开始在对应Medium层中对四周的Medium进行激活
-		for (auto TheField : TheGardener.getRefCompoundField())
+		for (auto& TheField : TheGardener.getRefCompoundField())
 		{
 			TheField->ActivateMedium(TimeOfNow, double(FrameTime)/1000);
 		}
 		
 		//让每个场对应的Medium层的每个Medium都振动（改变Height）
-		for (auto TheField : TheGardener.getRefCompoundField())
+		for (auto& TheField : TheGardener.getRefCompoundField())
 		{
 			for (int i = 0;i < ScreenWidth * ScreenHeight;++i) 
 			{
@@ -120,10 +145,10 @@ void Tips()
 	cout << "2.在“启动”选项中，在右侧第二行“默认终端应用程序”中，点击最右端类似“V”的按键，将选项设置为“Windows控制台主机”。右下角处点击蓝色键“保存”。" << endl;
 	cout << "3.设置完成。请关闭并重新启动此程序。" << endl;
 	cout << "-------------------------------------------------------------------------------------" << endl;
-	cout << "简介：    【!*!请先向上滑动鼠标滚轮，到页面最上方，查看“基础设置”并操作!*!】" << endl;
+	cout << "简介：    " << endl;
 	cout<< "操纵PlantingPoint（一开始位于中央）进行移动，选择位置，种下场源（两种可选），并按需调节振幅或者频率。反复操作，创造出独一无二、不可复制的视听景观！" << endl;
 	cout << "-------------------------------------------------------------------------------------" << endl;
-	cout << "操作指南：【!*!请先向上滑动鼠标滚轮，到页面最上方，查看“基础设置”并操作!*!】" << endl;
+	cout << "操作指南：【!请先向上滑动鼠标滚轮，到页面最上方，查看“基础设置”并操作!】" << endl;
 	cout << "-------------------------------------------------------------------------------------" << endl;
 	cout << "    W/S/A/D\t|控制PlantingPoint 向上/向下/向左/向右" << endl;
 	cout << "-------------------------------------------------------------------------------------" << endl;
@@ -143,6 +168,10 @@ void Tips()
 	cout << "-------------------------------------------------------------------------------------" << endl;
 	cout << "       M\t|静音/取消静音" << endl;
 	cout << "-------------------------------------------------------------------------------------" << endl;
+	cout << "       R\t|清除画面" << endl;
+	cout << "-------------------------------------------------------------------------------------" << endl;
+	cout << "       X\t|退出游戏  【!请先向上滑动鼠标滚轮，到页面最上方，查看“基础设置”并操作!】" << endl;
+	cout << "-------------------------------------------------------------------------------------" << endl;
 	cout << "     提示1\t|视设备性能不同，如果画面卡顿，可以按M键静音以缓解" << endl;
 	cout << "-------------------------------------------------------------------------------------" << endl;
 	cout << "     提示2\t|不要连续快速种下场源，按下按键后保持一下，并隔几秒再种另一个" << endl;
@@ -150,7 +179,6 @@ void Tips()
 	cout << "     提示3\t|进入游戏主画面后（封面及过渡页之后），下方有一栏数据栏，可供查看" << endl;
 	cout << "-------------------------------------------------------------------------------------" << endl;
 	cout << "在接下来的游戏过程中，请不要调节窗口大小或者全屏，如不小心操作了，请关闭并重启程序" << endl;
-	cout << "Have a good time!" << endl;
 	system("pause");
 }
 
@@ -188,7 +216,7 @@ void ReadFile(std::vector<char>& Character, std::string Directory)
 }
 
 //动态封面页
-void CoverPage(ScreenManager TheScreenManager)
+void CoverPage(ScreenManager& TheScreenManager)
 {
 	//读取背景文件
 	std::ifstream inFile("txtfile\\CoverPage.txt");
@@ -339,7 +367,7 @@ void CoverPage(ScreenManager TheScreenManager)
 }
 
 //开始前的过渡页
-void BridgePage(ScreenManager TheScreenManager)
+void BridgePage(ScreenManager& TheScreenManager)
 {
 	//设定时间原点
 	double TimeOrigin = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -375,6 +403,9 @@ int main()
 	CoverPage(PageManager);
 	BridgePage(PageManager);
 	ScreenManager TheScreenManager;
-	Act(TheScreenManager);
-	return 0;
+	bool IfRestart = false;
+	do {
+		IfRestart = false;
+		Act(TheScreenManager, IfRestart);
+	} while (IfRestart == true);
 }

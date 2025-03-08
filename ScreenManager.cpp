@@ -31,6 +31,15 @@ ScreenManager::ScreenManager(int screenWidth, int screenHeight, int fontWidth, i
 
 }
 
+ScreenManager::~ScreenManager() 
+{
+	// 释放内存
+	if (ScreenShow) { // 检查是否已分配内存
+		delete[] ScreenShow;
+		ScreenShow = nullptr;
+	}
+}
+
 void ScreenManager::ChangeBufferForm()
 {
 	for (int i = 0;i < m_ScreenWidth * m_ScreenHeight;++i)
